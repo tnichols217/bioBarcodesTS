@@ -2,7 +2,7 @@
 	"name": "bercode-generator",
 	"version": "0.0.1",
 	"description": "Generates barcodes form inventory files for the Dalat Biology laboratory",
-	"main": "src/main.js",
+	"main": "build/src/main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
