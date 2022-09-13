@@ -23,3 +23,8 @@ The default production build (build) transpiles, and bundles the output
 The default dev script (dev) runs the mon script, just runs the typescript files without transpilation or bundling
 
 The current bundle size is 1.9mb
+
+## TODO
+1. store latest trsx number
+2. create frontend and database to store locations of items
+3. store the UUID dictionary on disk instead of in memory
