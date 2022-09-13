@@ -1,3 +1,5 @@
 node_modules/
 .direnv/
 out/
+*.pdf
+*.csv
