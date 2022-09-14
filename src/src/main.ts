@@ -6,9 +6,6 @@ import * as fs from "fs"
 import * as de from "dotenv"
 import * as sheets from "./sheets"
 
-const args = process.argv.slice(2)
-const [outFolder, invCsv, histCsv] = args
-
 // use google sheets to get info
 de.config()
 type Env = {
@@ -36,8 +33,8 @@ if (env.USE = USE.SHEETS) {
     historyData = sheet.getSheet<invs.HistoryItemInputType>(sheets.Sheets.History, (row) => !!row.ChangeInQuantity)
 } else {
     // use csv
-    inventoryData = new csv.CSVFileParse<invs.InventoryItemType>(invCsv).complete
-    historyData = new csv.CSVFileParse<invs.HistoryItemInputType>(histCsv).complete
+    inventoryData = new csv.CSVFileParse<invs.InventoryItemType>(env.INVENTORY_CSV).complete
+    historyData = new csv.CSVFileParse<invs.HistoryItemInputType>(env.HISTORY_CSV).complete
 }
 
 
@@ -62,7 +59,7 @@ Promise.all([inventoryData, historyData]).then(async ([inv, hist]) => {
 
     Promise.all(Object.values(instances).map((instance) => instance.getFullSVG())).then((svgs) => {
         let pdfs = new pdf.SVG2PDF(40, 4, 10)
-        let outFile = `${outFolder}/${lastTrsx}-${history.LargestTrsx}.pdf`
+        let outFile = `${env.OUTPUT_FOLDER}/${lastTrsx}-${history.LargestTrsx}.pdf`
         let file = fs.createWriteStream(outFile)
         pdfs.convertToPDF(svgs, file, {
             "Hack-Regular" : "Hack-Regular.ttf"

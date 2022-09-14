@@ -24,7 +24,21 @@ The default dev script (dev) runs the mon script, just runs the typescript files
 
 The current bundle size is 1.9mb
 
+## .env setup
+```env
+OUTPUT_FOLDER = folder to save the generated pdfs
+USE = "sheets" # can be sheets or csv
+
+# if using CSV
+INVENTORY_CSV = location of the inventory csv
+HISTORY_CSV = location of the history csv
+LAST_TRSX = The last recorded transaction
+
+# if using google sheets
+GOOGLE_SERVICE_ACCOUNT_EMAIL = service email
+GOOGLE_PRIVATE_KEY = service private key
+SPREADSHEET_ID = id of spreadsheet (can be found in the URL)
+```
+
 ## TODO
-1. store latest trsx number
-2. create frontend and database to store locations of items
-3. store the UUID dictionary on disk instead of in memory
+1. create checkout interface
