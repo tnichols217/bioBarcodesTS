@@ -8,6 +8,20 @@ export enum Sheets {
     ReverseLookup = "Reverse Lookup",
     UUIDs = "UUIDs",
     Variables = "Variables",
+    Locations = "Locations"
+}
+
+export enum Locations {
+    Time = 0,
+    UUID,
+    Location
+}
+
+export enum UUIDs {
+    UUID = 0,
+    ID,
+    Barcode,
+    Location
 }
 
 export class InventorySpreadsheet {
@@ -51,6 +65,20 @@ export class InventorySpreadsheet {
         await this.finishedInit
         return new SheetDataStore(this.doc.sheetsByTitle[sheet])
     }
+
+    public async setLocation(UUID: string, Location: string) {
+        await this.finishedInit
+        let LocationsSheet = await this.getDataStore(Sheets.Locations)
+        let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
+        LocationsSheet.setRow(Date.now().toString(), [UUID, Location])
+        UUIDsSheet.set(UUID, Location, UUIDs.Location)
+    }
+
+    public async barcodeToUUID(barcode: string): Promise<string> {
+        await this.finishedInit
+        let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
+        return UUIDsSheet.get(barcode, 0, 2)
+    }
 }
 
 export class SheetDataStore {
@@ -59,11 +87,11 @@ export class SheetDataStore {
         this.Sheet = sheet
     }
 
-    public get(key: string) {
+    public get(key: string, column: number = 1, searchColumn: number = 0) {
         return new Promise<string>(async (resolve, reject) => {
             let rows = (await this.Sheet.getRows()).map(row => row._rawData as string[])
-            let keys = rows.map(row => row[0])
-            let values = rows.map(row => row[1])
+            let keys = rows.map(row => row[searchColumn])
+            let values = rows.map(row => row[column])
             let index = keys.indexOf(key)
             if (index != -1) {
                 resolve(values[index])
@@ -77,18 +105,37 @@ export class SheetDataStore {
         return Promise.all(keys.map(key => this.get(key)))
     }
 
-    public set(key: string, value: string) {
+    public set(key: string, value: string, column: number = 1) {
         return new Promise<void>(async (resolve, reject) => {
-            let keys = (await this.Sheet.getRows()).map(row => row._rawData[0] as string)
+            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[0] as string)).catch(reject) as string[]
             let index = keys.indexOf(key)
             if (index != -1) {
-                await this.Sheet.loadCells()
-                let updatedCell = this.Sheet.getCell(1, index + 1)
+                await this.Sheet.loadCells().catch(reject)
+                let updatedCell = this.Sheet.getCell(index + 1, column)
                 updatedCell.value = value
-                this.Sheet.saveCells([updatedCell])
+                updatedCell.save()
                 resolve()
             } else {
                 this.Sheet.addRow([key, value])
+                resolve()
+            }
+        })
+    }
+
+    public setRow(key: string, values: string[]) {
+        return new Promise<void>(async (resolve, reject) => {
+            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[0] as string)).catch(reject) as string[]
+            let index = keys.indexOf(key)
+            if (index != -1) {
+                await this.Sheet.loadCells().catch(reject)
+                for (let i = 0; i < values.length; i++) {
+                    let updatedCell = this.Sheet.getCell(index + 1, i)
+                    updatedCell.value = values[i]
+                    updatedCell.save()
+                }
+                resolve()
+            } else {
+                this.Sheet.addRow([key, ...values])
                 resolve()
             }
         })
@@ -98,12 +145,17 @@ export class SheetDataStore {
         return Promise.all(keyVals.map(([key, val]) => this.set(key, val)))
     }
 
-    public setDict(dict: Record<string, string>) {
-        return this.sets(Object.entries(dict))
+    public setsRow(keyVals: [string, string[]][]) {
+        return Promise.all(keyVals.map(([key, values]) => this.setRow(key, values)))
+    }
+
+    public setDict(dict: Record<string, string[]>) {
+        return this.setsRow(Object.entries(dict))
     }
 }
 
 module.exports = {
     Sheets,
-    InventorySpreadsheet
+    InventorySpreadsheet,
+    Locations
 }

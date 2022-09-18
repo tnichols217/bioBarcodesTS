@@ -41,12 +41,12 @@ export class InventoryItem {
         this.BarcodeItem = new barcode.ItemInfo(this.InventoryItem as barcode.ItemInfoType)
     }
 
-    public instantiate(n: number = 1): Record<string, string> {
-        let out: Record<string, string> = {}
+    public instantiate(n: number = 1): Record<string, string[]> {
+        let out: Record<string, string[]> = {}
         for (let i = 0; i < n; i++) {
             let instance = this.BarcodeItem.instantiate()
             this.Instances[instance.ItemInfo.UUID] = instance
-            out[instance.ItemInfo.UUID] = instance.ItemInfo.ItemInfo.ID
+            out[instance.ItemInfo.UUID] = [instance.ItemInfo.ItemInfo.ID, instance.ItemInfo.Barcode]
         }
         return out
     }
@@ -78,7 +78,7 @@ export class HistoryItem {
         this.HistoryItem = Object.assign({}, data, {ChangeInQuantity: parseInt(data.ChangeInQuantity)})
     }
 
-    public instantiate(inv: Inventory): Record<string, string> {
+    public instantiate(inv: Inventory): Record<string, string[]> {
         return inv.Items[this.HistoryItem.ID].instantiate(this.HistoryItem.ChangeInQuantity)
     }
 }
@@ -125,7 +125,7 @@ export class History {
     }
 
     public instantiate(inv: Inventory) {
-        let out: Record<string, string> = {}
+        let out: Record<string, string[]> = {}
         for (let histItem of Object.values(this.Items)) {
             Object.assign(out, histItem.instantiate(inv))
         }

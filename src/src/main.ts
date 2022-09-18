@@ -75,6 +75,9 @@ Promise.all([inventoryData, historyData]).then(async ([inv, hist]) => {
         sheet.getDataStore(sheets.Sheets.Variables).then((dataStore) => {
             dataStore.set("LargestTrsx", history.LargestTrsx)
         })
+
+        // sheet.setLocation("6286204d8cc4d8a4c61b7be478890121337", "Trevor")
+        // console.log(await sheet.barcodeToUUID("16842768144"))
     } else {
         // use csv
         console.log(UUIDdict)
