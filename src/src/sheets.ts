@@ -77,7 +77,21 @@ export class InventorySpreadsheet {
     public async barcodeToUUID(barcode: string): Promise<string> {
         await this.finishedInit
         let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
-        return UUIDsSheet.get(barcode, 0, 2)
+        return UUIDsSheet.get(barcode, UUIDs.UUID, UUIDs.Barcode)
+    }
+
+    public async updateLocations() {
+        let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
+        let LocationsDict: Record<string, string> = {}
+        this.doc.sheetsByTitle[Sheets.Locations].getRows().then(rows => {
+            rows.forEach(row => {
+                let data = row._rawData as string[]
+                LocationsDict[data[Locations.UUID]] = data[Locations.Location]
+            })
+            Object.entries(LocationsDict).forEach(([uuid, location]) => {
+                UUIDsSheet.set(uuid, location, UUIDs.Location)
+            })
+        })
     }
 }
 
