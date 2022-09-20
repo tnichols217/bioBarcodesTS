@@ -1,4 +1,5 @@
 import * as spreadsheet from "google-spreadsheet"
+import { QRData } from "./barcode"
 
 export enum Sheets {
     Inventory = "Inventory",
@@ -82,14 +83,20 @@ export class InventorySpreadsheet {
 
     public async updateLocations() {
         let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
-        let LocationsDict: Record<string, string> = {}
+        let LocationsDict: Record<string, {location: string, date: string}> = {}
         this.doc.sheetsByTitle[Sheets.Locations].getRows().then(rows => {
             rows.forEach(row => {
                 let data = row._rawData as string[]
-                LocationsDict[data[Locations.UUID]] = data[Locations.Location]
+                LocationsDict[data[Locations.UUID]] = {location: data[Locations.Location], date: data[Locations.Time]}
             })
-            Object.entries(LocationsDict).forEach(([uuid, location]) => {
-                UUIDsSheet.set(uuid, location, UUIDs.Location)
+            Object.entries(LocationsDict).forEach(async ([uuid, info]) => {
+                if (uuid.length < 15) {
+                    uuid = await this.barcodeToUUID(uuid.slice(0, 11))
+                    this.getDataStore(Sheets.Locations).then(dataStore => dataStore.set(info.date, uuid))
+                } else if (uuid.length > 40) {
+                    uuid = (JSON.parse(uuid) as QRData).UUID
+                }
+                UUIDsSheet.set(uuid, info.location, UUIDs.Location)
             })
         })
     }
