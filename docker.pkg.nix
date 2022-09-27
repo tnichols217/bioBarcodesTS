@@ -1,18 +1,20 @@
-{ pkgs, nativeBuildInputs }:
+{ pkgs, nativeBuildInputs, nodeDeps }:
 
 pkgs.stdenv.mkDerivation rec {
+  inherit nativeBuildInputs;
   pname = "biobarcodes";
   version = "v1.0.0";
 
   src = ./.;
 
-  nativeBuildInputs = nativeBuildInputs;
-
   buildPhase =
   ''
 
-  npm i
+  runHook preBuild
+  ln -sf ${nodeDeps}/lib/node_modules ./node_modules
+  export PATH="${nodeDeps}/bin:$PATH"
   npm run build
+  runHook postBuild
 
   '';
 

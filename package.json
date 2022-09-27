@@ -15,7 +15,8 @@
 		"mon": "nodemon -x \"npx ts-node src/src/main.ts out/pdfs\" -w src -e ts",
 		"mon-transpile": "nodemon -x \"npm run transpile && node out/build/main.js out/pdfs\" -w src -e ts",
 		"mon-bundle": "nodemon -x \"npm run transpile && npm run bundle-dev && node out/bundle/main.js out/pdfs\" -w src -e ts",
-		"dev": "npm run mon"
+		"dev": "npm run mon",
+		"update-nix-build-env": "node2nix -16 --development --input package.json --lock package-lock.json --node-env ./nix/node-env.nix --composition ./nix/default.nix --output ./nix/node-package.nix"
 	},
 	"keywords": [],
 	"author": "Trevor Nichols",
