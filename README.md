@@ -40,5 +40,27 @@ GOOGLE_PRIVATE_KEY = service private key
 SPREADSHEET_ID = id of spreadsheet (can be found in the URL)
 ```
 
+## Spreadsheet Layout
+- History
+    1. Trsx ID
+    2. Date
+    3. ID
+    4. Name
+    5. Change In Quantity
+    6. Reason / Notes
+- UUIDs
+    1. UUID
+    2. ID
+    3. Barcode
+    4. Location
+- Variables
+    1. Key
+    2. Value
+- Locations
+    1. Trsx ID
+    2. Time
+    3. UUID
+    4. Location
+
 ## TODO
 1. create checkout interface

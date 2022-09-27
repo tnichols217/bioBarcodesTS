@@ -1,4 +1,5 @@
 import * as spreadsheet from "google-spreadsheet"
+import { UrlWithStringQuery } from "url";
 import { QRData } from "./barcode"
 
 export enum Sheets {
@@ -13,7 +14,8 @@ export enum Sheets {
 }
 
 export enum Locations {
-    Time = 0,
+    TrsxID = 0,
+    Time,
     UUID,
     Location
 }
@@ -83,20 +85,34 @@ export class InventorySpreadsheet {
 
     public async updateLocations() {
         let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
-        let LocationsDict: Record<string, {location: string, date: string}> = {}
+        let LocationsDict: Record<string, {location: string, ID: string}> = {}
         this.doc.sheetsByTitle[Sheets.Locations].getRows().then(rows => {
             rows.forEach(row => {
                 let data = row._rawData as string[]
-                LocationsDict[data[Locations.UUID]] = {location: data[Locations.Location], date: data[Locations.Time]}
+                LocationsDict[data[Locations.UUID]] = {location: data[Locations.Location], ID: data[Locations.TrsxID]}
             })
             Object.entries(LocationsDict).forEach(async ([uuid, info]) => {
-                if (uuid.length < 15) {
-                    uuid = await this.barcodeToUUID(uuid.slice(0, 11))
-                    this.getDataStore(Sheets.Locations).then(dataStore => dataStore.set(info.date, uuid))
-                } else if (uuid.length > 40) {
+                if (uuid.startsWith("{")) { //is JSON because of the QR
                     uuid = (JSON.parse(uuid) as QRData).UUID
                 }
-                UUIDsSheet.set(uuid, info.location, UUIDs.Location)
+
+                uuid = uuid.toUpperCase()
+
+                UUIDsSheet.get(uuid).then(() => {                                                                           //uuid exists
+                    UUIDsSheet.set(uuid, info.location, UUIDs.Location)
+                }).catch(() => {                                                                                            //uuid doesnt exist
+                    this.barcodeToUUID(uuid).then(uuid => {                                                                     //barcode exists
+                        this.getDataStore(Sheets.Locations).then(dataStore => dataStore.set(info.ID, uuid, Locations.UUID))
+                        UUIDsSheet.set(uuid, info.location, UUIDs.Location)
+                    }).catch(() => {                                                                                            //barcode doesnt exist
+                        UUIDsSheet.get(uuid, UUIDs.UUID, UUIDs.UUID, key => key.slice(0, uuid.length)).then(uuid => {               //shortcode exists
+                            this.getDataStore(Sheets.Locations).then(dataStore => dataStore.set(info.ID, uuid, Locations.UUID))
+                            UUIDsSheet.set(uuid, info.location, UUIDs.Location)
+                        }).catch(() => {                                                                                            //shortcode doesnt exist
+                            console.error("cannot find barcode ", uuid)
+                        })
+                    })
+                })
             })
         })
     }
@@ -108,10 +124,10 @@ export class SheetDataStore {
         this.Sheet = sheet
     }
 
-    public get(key: string, column: number = 1, searchColumn: number = 0) {
+    public get(key: string, column: number = 1, searchColumn: number = 0, transform: (key: string) => string = key => key) {
         return new Promise<string>(async (resolve, reject) => {
             let rows = (await this.Sheet.getRows()).map(row => row._rawData as string[])
-            let keys = rows.map(row => row[searchColumn])
+            let keys = rows.map(row => row[searchColumn]).map(transform)
             let values = rows.map(row => row[column])
             let index = keys.indexOf(key)
             if (index != -1) {
@@ -122,13 +138,13 @@ export class SheetDataStore {
         })
     }
 
-    public gets(keys: string[]) {
-        return Promise.all(keys.map(key => this.get(key)))
+    public gets(keys: string[], column: number = 1, searchColumn: number = 0, transform: (key: string) => string = key => key) {
+        return Promise.all(keys.map(key => this.get(key, column, searchColumn, transform)))
     }
 
-    public set(key: string, value: string, column: number = 1) {
+    public set(key: string, value: string, column: number = 1, searchColumn: number = 0) {
         return new Promise<void>(async (resolve, reject) => {
-            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[0] as string)).catch(reject) as string[]
+            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[searchColumn] as string)).catch(reject) as string[]
             let index = keys.indexOf(key)
             if (index != -1) {
                 await this.Sheet.loadCells().catch(reject)
@@ -143,9 +159,9 @@ export class SheetDataStore {
         })
     }
 
-    public setRow(key: string, values: string[]) {
+    public setRow(key: string, values: string[], searchColumn: number = 0) {
         return new Promise<void>(async (resolve, reject) => {
-            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[0] as string)).catch(reject) as string[]
+            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[searchColumn] as string)).catch(reject) as string[]
             let index = keys.indexOf(key)
             if (index != -1) {
                 await this.Sheet.loadCells().catch(reject)
@@ -162,12 +178,12 @@ export class SheetDataStore {
         })
     }
 
-    public sets(keyVals: [string, string][]) {
-        return Promise.all(keyVals.map(([key, val]) => this.set(key, val)))
+    public sets(keyVals: [string, string][], column: number = 1, searchColumn: number = 0) {
+        return Promise.all(keyVals.map(([key, val]) => this.set(key, val, column, searchColumn)))
     }
 
-    public setsRow(keyVals: [string, string[]][]) {
-        return Promise.all(keyVals.map(([key, values]) => this.setRow(key, values)))
+    public setsRow(keyVals: [string, string[]][], searchColumn: number = 0) {
+        return Promise.all(keyVals.map(([key, values]) => this.setRow(key, values, searchColumn)))
     }
 
     public setDict(dict: Record<string, string[]>) {

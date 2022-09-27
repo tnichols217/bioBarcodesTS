@@ -1,16 +1,17 @@
 
-import {v4 as uuid} from "uuid"
+// import {v4 as UUID} from "uuid"
 import JsBarcode from "jsbarcode"
 import { DOMImplementation, XMLSerializer, DOMParser } from "xmldom"
 import QRCode from "qrcode"
 import { optimize, OptimizedSvg } from "svgo"
+import { randomInt } from "crypto"
 
+const ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const UUID_LENGTH = 11
+const UUID = () => Array.from({length: UUID_LENGTH}, () => ALPHABET[randomInt(0, ALPHABET.length)]).join("")
 
 export type ItemInfoType = {
     ID: string,
-    CategoryID: string,
-    ItemID: string,
-    VariationID: string,
     Category: string,
     Name: string,
     Variation: string,
@@ -28,7 +29,6 @@ export class ItemInfo {
 }
 
 export type ItemType = {
-    RandThree: string,
     ItemInfo: ItemInfoType,
     Barcode: string,
     QR: string,
@@ -48,20 +48,12 @@ export class Item {
     public ItemInfo: ItemType
 
     public static generate(itemInfo: ItemInfoType): Item {
-        
-        let RandThree = ("00" + Math.floor(Math.random() * 1000).toString()).slice(-3)
 
-        let Barcode = ("0" + parseInt(itemInfo.ID.split("").map(
-            char => char != "-" ? char : ""
-        ).join(""), 16).toString() + RandThree).slice(-12)
+        let uuid = UUID()
 
-        let UUID = RandThree + uuid().split("").map(
-            char => char != "-" ? char : ""
-        ).join("").slice(0, 33)
+        let Barcode = itemInfo.ID + "-" + uuid.slice(0, 3)
 
         return new Item({
-            RandThree: RandThree,
-
             ItemInfo: itemInfo,
 
             Barcode: Barcode,
@@ -71,10 +63,10 @@ export class Item {
                 Name: itemInfo.Name,
                 Category: itemInfo.Category,
                 Variation: itemInfo.Variation,
-                UUID: UUID
+                UUID: uuid
             } as QRData),
 
-            UUID: UUID
+            UUID: uuid
         })
     }
 
@@ -90,7 +82,7 @@ export class Item {
 
             JsBarcode(svgNode, this.ItemInfo.Barcode, {
                 xmlDocument: document,
-                format: "EAN13",
+                format: "CODE39",
                 displayValue: false,
                 height: 50,
                 width: 1,
@@ -142,16 +134,16 @@ export class Item {
                 this.ItemInfo.ItemInfo.Name, 
                 this.ItemInfo.ItemInfo.Category, 
                 this.ItemInfo.ItemInfo.Variation, 
-                this.ItemInfo.ItemInfo.ID,
+                this.ItemInfo.Barcode,
                 this.ItemInfo.UUID
             ]
             // the amount of lines each element will take up
             const lines = [
+                3,
                 2,
                 1,
                 1,
-                1,
-                3
+                1
             ]
             for (let i = 0; i < words.length; i++) {
                 for (let j = 0; j < lines[i]; j++) {
@@ -207,7 +199,6 @@ export class Item {
         }
         return xmlSerializer.serializeToString(svgNode);
     }
-    // 128.5 186.45
 }
 
 module.exports = {
