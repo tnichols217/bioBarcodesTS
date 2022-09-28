@@ -6,8 +6,6 @@ pkgs.dockerTools.buildImage {
     paths = [ app pkgs.nodejs ];
     pathsToLink = [ "/bin" ];
   };
-  # This ensures symlinks to directories are preserved in the image
-  keepContentsDirlinks = true;
   config = {
     Cmd = [ "node" "${app}/bin/${name}/main.js" "/env/.env" ];
     Volumes = { "/env" = {}; "/out" = {}; };
