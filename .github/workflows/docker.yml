@@ -20,8 +20,8 @@ jobs:
       - name: Get nix
         uses: cachix/install-nix-action@v17
 
-      - name: Run a one-line script
-        run: sudo nix build $GITHUB_WORKSPACE#docker
+      - name: Build the Docker image
+        run: nix build $GITHUB_WORKSPACE#docker
         
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.0
