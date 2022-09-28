@@ -14,12 +14,13 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Get nix
-        run: |
-          sudo mkdir /nix
-          sudo sh <(curl -L https://nixos.org/nix/install) --no-daemon
+        uses: cachix/install-nix-action@v16
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Run a one-line script
         run: sudo nix build $GITHUB_WORKSPACE#docker
