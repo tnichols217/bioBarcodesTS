@@ -24,8 +24,8 @@
           app = dream2nixOut.packages."${system}".default;
         in with pkgs; {
           packages = rec {
-            filtered = pkgs.callPackage ./filter.pkg.nix { file = app; };
-            docker = pkgs.callPackage ./docker.pkg.nix { app = filtered; name = app.packageName; };
+            filtered = pkgs.callPackage ./nix/filter.pkg.nix { file = app; };
+            docker = pkgs.callPackage ./nix/docker.pkg.nix { app = filtered; name = app.packageName; };
           };
         });
     in

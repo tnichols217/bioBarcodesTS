@@ -3,7 +3,7 @@ pkgs.dockerTools.buildImage {
   inherit name;
   copyToRoot = pkgs.buildEnv {
     inherit name;
-    paths = [ app pkgs.nodejs pkgs.dockerTools.binSh pkgs.nano ];
+    paths = [ app pkgs.nodejs ];
     pathsToLink = [ "/bin" ];
   };
   # This ensures symlinks to directories are preserved in the image
