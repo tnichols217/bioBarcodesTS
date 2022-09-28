@@ -10,19 +10,20 @@ on:
 
 jobs:
   build:
-    runs-on: nixos/nix
+    runs-on: ubuntu-latest
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      # Runs a single command using the runners shell
+      - name: Get nix
+        run: sudo apt install nix
+
       - name: Run a one-line script
         run: nix build $GITHUB_WORKSPACE#docker
         
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.0
         with:
-          # Artifact name
           name: docker.img
           path: $GITHUB_WORKSPACE/result
