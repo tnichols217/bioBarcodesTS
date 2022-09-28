@@ -21,15 +21,19 @@ jobs:
         uses: cachix/install-nix-action@v17
 
       - name: Build the Docker image
-        run: nix build $GITHUB_WORKSPACE#docker
+        run: |
+          nix build $GITHUB_WORKSPACE#docker
+          cp $GITHUB_WORKSPACE/result /
 
       - name: For testing purposes
         run: |
           cd $GITHUB_WORKSPACE
           ls -al
+          cd /
+          ls -al
         
       - name: Upload the image
         uses: actions/upload-artifact@v3.1.0
         with:
-          name: docker.img
-          path: $GITHUB_WORKSPACE/result
+          name: docker.tar.gz
+          path: /result
