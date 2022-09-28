@@ -10,7 +10,7 @@ pkgs.dockerTools.buildImage {
   keepContentsDirlinks = true;
   config = {
     Cmd = [ "node" "${app}/bin/${name}/main.js" "/env/.env" ];
-    Volumes = { "/env" = {}; };
+    Volumes = { "/env" = {}; "/out" = {}; };
     WorkingDir = "${app}/bin/${name}";
   };
 }
