@@ -23,17 +23,9 @@
           pkgs = nixpkgs.legacyPackages.${system};
           app = dream2nixOut.packages."${system}".default;
         in with pkgs; {
-          packages.filtered = pkgs.callPackage ./filter.pkg.nix { file = app; };
-          packages.docker = dockerTools.buildImage {
-            name = app.packageName;
-            copyToRoot = pkgs.buildEnv {
-              name = app.packageName;
-              paths = [ app ];
-              pathsToLink = [ "/bin" "/lib" ];
-            };
-            # This ensures symlinks to directories are preserved in the image
-            keepContentsDirlinks = true;
-            config = { Cmd = [ "/bin/ts-node-nix" ]; };
+          packages = rec {
+            filtered = pkgs.callPackage ./filter.pkg.nix { file = app; };
+            docker = pkgs.callPackage ./docker.pkg.nix { app = filtered; name = app.packageName; };
           };
         });
     in

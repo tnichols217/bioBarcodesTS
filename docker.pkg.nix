@@ -1,13 +1,16 @@
-{ pkgs, app,  }:
-
-dockerTools.buildImage {
-  name = app.packageName;
+{ pkgs, app, name }:
+pkgs.dockerTools.buildImage {
+  inherit name;
   copyToRoot = pkgs.buildEnv {
-    name = app.packageName;
-    paths = [ app ];
-    pathsToLink = [ "/bin" "/lib" ];
+    inherit name;
+    paths = [ app pkgs.nodejs pkgs.dockerTools.binSh pkgs.nano ];
+    pathsToLink = [ "/bin" ];
   };
   # This ensures symlinks to directories are preserved in the image
   keepContentsDirlinks = true;
-  config = { Cmd = [ "/bin/ts-node-nix" ]; };
+  config = {
+    Cmd = [ "node" "${app}/bin/${name}/main.js" "/env/.env" ];
+    Volumes = { "/env" = {}; };
+    WorkingDir = "${app}/bin/${name}";
+  };
 }

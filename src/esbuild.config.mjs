@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
+import fs from "fs-extra"
 
 const banner =
 `/*
@@ -16,6 +17,8 @@ const args = process.argv.slice(2)
 const prod = args.includes(PROD)
 const watch = args.includes(WATCH)
 
+const outDir = "out/bundle"
+
 esbuild.build({
 	banner: {
 		js: banner,
@@ -30,5 +33,8 @@ esbuild.build({
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
-	outdir: 'out/bundle',
+	outdir: outDir,
 }).catch(() => process.exit(1));
+
+fs.copy("Hack-Regular.ttf", outDir + "/Hack-Regular.ttf")
+fs.copy("node_modules/pdfkit/js/data", outDir + "/data")

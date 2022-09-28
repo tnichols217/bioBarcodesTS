@@ -11,7 +11,7 @@ pkgs.stdenv.mkDerivation rec {
 
   mkdir -p $out/bin/${file.packageName}
 
-  cp ./lib/node_modules/barcode-generator/* $out/bin/${file.packageName}
+  cp -r ./lib/node_modules/${file.packageName}/out/bundle/* $out/bin/${file.packageName}
 
   '';
 

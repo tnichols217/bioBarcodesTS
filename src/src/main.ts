@@ -6,8 +6,10 @@ import * as fs from "fs"
 import * as de from "dotenv"
 import * as sheets from "./sheets"
 
+const conf = process.argv[2]
+
 // use google sheets to get info
-de.config()
+de.config(conf ? { path: conf }: {})
 type Env = {
     OUTPUT_FOLDER: string,
     USE: string,
