@@ -23,7 +23,7 @@ jobs:
       - name: Build the Docker image
         run: |
           nix build $GITHUB_WORKSPACE#docker
-          cp $GITHUB_WORKSPACE/result /
+          sudo cp $GITHUB_WORKSPACE/result /
 
       - name: For testing purposes
         run: |
