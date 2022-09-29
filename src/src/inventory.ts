@@ -2,9 +2,6 @@ import * as barcode from "./barcode"
 
 export type InventoryItemType = {
     ID: string,
-    CategoryID: string,
-    ItemID: string,
-    VariationID: string,
     Category: string,
     Name: string,
     Variation: string,
