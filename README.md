@@ -94,8 +94,8 @@ Upon push to `release`, or manual run in github actions, the docker image will b
 ## Docker
 When built for docker, the runtime will look for an env file at `/env/.env`, this file must be mounted into the docker in order for it to run
 To start the container,
-1. Obtain the container.tar.gz
-2. Load the container with `docker load < container.tar.gz` or with `docker load --input container.tar.gz`
+1. Obtain the docker.tar.gz
+2. Load the container with `docker load < docker.tar.gz` or with `docker load --input docker.tar.gz`
 3. Run the container with
     ```sh
     docker run --mount type=bind,source=$ENVFILE,target=/env/.env --mount type=bind,source=$OUT_FOLDER,target=$INTERNAL_OUT_FOLDER $IMAGEID
