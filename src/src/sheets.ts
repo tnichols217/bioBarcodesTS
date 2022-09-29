@@ -14,17 +14,17 @@ export enum Sheets {
 }
 
 export enum Locations {
-    TrsxID = 0,
-    Time,
-    UUID,
-    Location
+    TrsxID = "Trsx ID",
+    Time = "Time",
+    UUID = "UUID",
+    Location = "Location"
 }
 
 export enum UUIDs {
-    UUID = 0,
-    ID,
-    Barcode,
-    Location
+    UUID = "UUID",
+    ID = "ID",
+    Barcode = "Barcode",
+    Location = "Location"
 }
 
 export class InventorySpreadsheet {
@@ -88,8 +88,7 @@ export class InventorySpreadsheet {
         let LocationsDict: Record<string, {location: string, ID: string}> = {}
         this.doc.sheetsByTitle[Sheets.Locations].getRows().then(rows => {
             rows.forEach(row => {
-                let data = row._rawData as string[]
-                LocationsDict[data[Locations.UUID]] = {location: data[Locations.Location], ID: data[Locations.TrsxID]}
+                LocationsDict[row[Locations.UUID]] = {location: row[Locations.Location], ID: row[Locations.TrsxID]}
             })
             Object.entries(LocationsDict).forEach(async ([uuid, info]) => {
                 if (uuid.startsWith("{")) { //is JSON because of the QR
@@ -124,11 +123,11 @@ export class SheetDataStore {
         this.Sheet = sheet
     }
 
-    public get(key: string, column: number = 1, searchColumn: number = 0, transform: (key: string) => string = key => key) {
+    public get(key: string, column: string = "", searchColumn: string = "", transform: (key: string) => string = key => key) {
         return new Promise<string>(async (resolve, reject) => {
-            let rows = (await this.Sheet.getRows()).map(row => row._rawData as string[])
-            let keys = rows.map(row => row[searchColumn]).map(transform)
-            let values = rows.map(row => row[column])
+            let rows = await this.Sheet.getRows()
+            let keys = rows.map(row => searchColumn ? row[searchColumn] : row._rawData[0]).map(transform)
+            let values = rows.map(row => column ? row[column] : row._rawData[1])
             let index = keys.indexOf(key)
             if (index != -1) {
                 resolve(values[index])
@@ -138,17 +137,18 @@ export class SheetDataStore {
         })
     }
 
-    public gets(keys: string[], column: number = 1, searchColumn: number = 0, transform: (key: string) => string = key => key) {
+    public gets(keys: string[], column: string = "", searchColumn: string = "", transform: (key: string) => string = key => key) {
         return Promise.all(keys.map(key => this.get(key, column, searchColumn, transform)))
     }
 
-    public set(key: string, value: string, column: number = 1, searchColumn: number = 0) {
+    public set(key: string, value: string, column: string = "", searchColumn: string = "") {
         return new Promise<void>(async (resolve, reject) => {
-            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[searchColumn] as string)).catch(reject) as string[]
+            let rows = await this.Sheet.getRows().catch(reject) as spreadsheet.GoogleSpreadsheetRow[]
+            let keys = rows.map(row => searchColumn ? row[searchColumn] as string : row._rawData[0] as string)
             let index = keys.indexOf(key)
             if (index != -1) {
                 await this.Sheet.loadCells().catch(reject)
-                let updatedCell = this.Sheet.getCell(index + 1, column)
+                let updatedCell = rows[index][column]
                 updatedCell.value = value
                 updatedCell.save()
                 resolve()
@@ -159,14 +159,15 @@ export class SheetDataStore {
         })
     }
 
-    public setRow(key: string, values: string[], searchColumn: number = 0) {
+    public setRow(key: string, values: string[], searchColumn: string = "") {
         return new Promise<void>(async (resolve, reject) => {
-            let keys = await this.Sheet.getRows().then(rows => rows.map(row => row._rawData[searchColumn] as string)).catch(reject) as string[]
+            let rows = await this.Sheet.getRows().catch(reject) as spreadsheet.GoogleSpreadsheetRow[]
+            let keys = rows.map(row => searchColumn ? row[searchColumn] as string : row._rawData[0] as string)
             let index = keys.indexOf(key)
             if (index != -1) {
                 await this.Sheet.loadCells().catch(reject)
                 for (let i = 0; i < values.length; i++) {
-                    let updatedCell = this.Sheet.getCell(index + 1, i)
+                    let updatedCell = rows[index]._rawData[i]
                     updatedCell.value = values[i]
                     updatedCell.save()
                 }
@@ -178,11 +179,11 @@ export class SheetDataStore {
         })
     }
 
-    public sets(keyVals: [string, string][], column: number = 1, searchColumn: number = 0) {
+    public sets(keyVals: [string, string][], column: string = "", searchColumn: string = "") {
         return Promise.all(keyVals.map(([key, val]) => this.set(key, val, column, searchColumn)))
     }
 
-    public setsRow(keyVals: [string, string[]][], searchColumn: number = 0) {
+    public setsRow(keyVals: [string, string[]][], searchColumn: string = "") {
         return Promise.all(keyVals.map(([key, values]) => this.setRow(key, values, searchColumn)))
     }
 

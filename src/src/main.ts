@@ -47,7 +47,6 @@ Promise.all([inventoryData, historyData]).then(async ([inv, hist]) => {
     if (env.USE = USE.SHEETS) {
         // use sheets
         lastTrsx = await (await sheet.getDataStore(sheets.Sheets.Variables)).get("LargestTrsx")
-        // lastTrsx = "0" //FOR TESTING ONLY
     } else {
         // use csv
        lastTrsx = env.LAST_TRSX
