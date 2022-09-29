@@ -56,9 +56,10 @@ Promise.all([inventoryData, historyData]).then(async ([inv, hist]) => {
     let history = invs.History.constructFromCSV(hist, lastTrsx)
 
     let UUIDdict = history.instantiate(inventory)
-    let instances = inventory.getAllInstances()
 
     if (lastTrsx != history.LargestTrsx) {
+        let instances = inventory.getAllInstances()
+        console.log(instances)
         Promise.all(Object.values(instances).map((instance) => instance.getFullSVG())).then((svgs) => {
             let pdfs = new pdf.SVG2PDF(40, 4, 10)
             let outFile = `${env.OUTPUT_FOLDER}/${lastTrsx}-${history.LargestTrsx}.pdf`

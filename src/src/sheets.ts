@@ -147,7 +147,7 @@ export class SheetDataStore {
             let index = keys.indexOf(key)
             if (index != -1) {
                 await this.Sheet.loadCells().catch(reject)
-                let updatedCell = rows[index][column]
+                let updatedCell = this.Sheet.getCell(rows[index].rowIndex - 1, column ? this.Sheet.headerValues.indexOf(column) : 1)
                 updatedCell.value = value
                 updatedCell.save()
                 resolve()
@@ -166,7 +166,7 @@ export class SheetDataStore {
             if (index != -1) {
                 await this.Sheet.loadCells().catch(reject)
                 for (let i = 0; i < values.length; i++) {
-                    let updatedCell = rows[index]._rawData[i]
+                    let updatedCell = this.Sheet.getCell(rows[index].rowIndex, i)
                     updatedCell.value = values[i]
                     updatedCell.save()
                 }
