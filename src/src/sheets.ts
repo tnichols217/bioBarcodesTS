@@ -1,5 +1,4 @@
 import * as spreadsheet from "google-spreadsheet"
-import { UrlWithStringQuery } from "url";
 import { QRData } from "./barcode"
 
 export enum Sheets {

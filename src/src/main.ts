@@ -12,7 +12,7 @@ const conf = process.argv[2]
 de.config(conf ? { path: conf }: {})
 type Env = {
     OUTPUT_FOLDER: string,
-    USE: string,
+    USE: USE,
     INVENTORY_CSV: string,
     HISTORY_CSV: string,
     LAST_TRSX: string,
@@ -58,14 +58,16 @@ Promise.all([inventoryData, historyData]).then(async ([inv, hist]) => {
     let UUIDdict = history.instantiate(inventory)
     let instances = inventory.getAllInstances()
 
-    Promise.all(Object.values(instances).map((instance) => instance.getFullSVG())).then((svgs) => {
-        let pdfs = new pdf.SVG2PDF(40, 4, 10)
-        let outFile = `${env.OUTPUT_FOLDER}/${lastTrsx}-${history.LargestTrsx}.pdf`
-        let file = fs.createWriteStream(outFile)
-        pdfs.convertToPDF(svgs, file, {
-            "Hack-Regular" : "Hack-Regular.ttf"
+    if (lastTrsx != history.LargestTrsx) {
+        Promise.all(Object.values(instances).map((instance) => instance.getFullSVG())).then((svgs) => {
+            let pdfs = new pdf.SVG2PDF(40, 4, 10)
+            let outFile = `${env.OUTPUT_FOLDER}/${lastTrsx}-${history.LargestTrsx}.pdf`
+            let file = fs.createWriteStream(outFile)
+            pdfs.convertToPDF(svgs, file, {
+                "Hack-Regular" : "Hack-Regular.ttf"
+            })
         })
-    })
+    }
 
     if (env.USE = USE.SHEETS) {
         // use sheets

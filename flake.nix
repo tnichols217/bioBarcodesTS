@@ -26,6 +26,8 @@
           packages = rec {
             filtered = pkgs.callPackage ./nix/filter.pkg.nix { file = app; };
             docker = pkgs.callPackage ./nix/docker.pkg.nix { app = filtered; name = app.packageName; };
+            node = app;
+            default = docker;
           };
         });
     in
