@@ -35,14 +35,14 @@ export class InventorySpreadsheet {
             this.doc.useServiceAccountAuth({
                 client_email: email,
                 private_key: key,
-              }).then(() => {
-                  this.doc.loadInfo().then(resolve).catch(reject)
-              })
+            }).then(() => {
+                this.doc.loadInfo().then(resolve).catch(reject)
+            })
         })
     }
 
     public getSheet<T extends Record<string, string> = Record<string, string>>(sheet: string, filter: (row: T) => boolean = () => true): Promise<T[]> {
-        return new Promise<T[]> (async (resolve, reject) => {
+        return new Promise<T[]>(async (resolve, reject) => {
             await this.finishedInit
             let spreadsheet = this.doc.sheetsByTitle[sheet];
             spreadsheet.getRows().then((rows) => {
@@ -83,12 +83,23 @@ export class InventorySpreadsheet {
     }
 
     public async updateLocations() {
+        let lastLocation = await (await this.getDataStore(Sheets.Variables)).get("lastLocation").catch(console.error) || "0"
+        let lastLocationInt = parseInt(lastLocation, 16)
         let UUIDsSheet = await this.getDataStore(Sheets.UUIDs)
-        let LocationsDict: Record<string, {location: string, ID: string}> = {}
-        this.doc.sheetsByTitle[Sheets.Locations].getRows().then(rows => {
-            rows.forEach(row => {
-                LocationsDict[row[Locations.UUID]] = {location: row[Locations.Location], ID: row[Locations.TrsxID]}
-            })
+        let LocationsDict: Record<string, { location: string, ID: string }> = {}
+        let LocationsSheet = await this.getDataStore(Sheets.Locations)
+        this.doc.sheetsByTitle[Sheets.Locations].getRows().then(async rows => {
+            rows.map(row => [row, parseInt(row[Locations.TrsxID], 16)] as [spreadsheet.GoogleSpreadsheetRow, number])
+                .filter(([_, id]) => id > lastLocationInt)
+                .forEach(([row, id]) => {
+                    LocationsDict[row[Locations.UUID]] = { location: row[Locations.Location], ID: row[Locations.TrsxID] }
+                    LocationsSheet.set(row[Locations.TrsxID], (new Date()).toString(), Locations.Time, Locations.TrsxID)
+                    if (id > lastLocationInt) {
+                        lastLocationInt = id
+                        lastLocation = row[Locations.TrsxID]
+                    }
+                })
+            this.getDataStore(Sheets.Variables).then(variables => variables.set("lastLocation", lastLocation))
             Object.entries(LocationsDict).forEach(async ([uuid, info]) => {
                 if (uuid.startsWith("{")) { //is JSON because of the QR
                     uuid = (JSON.parse(uuid) as QRData).UUID
@@ -131,7 +142,7 @@ export class SheetDataStore {
             if (index != -1) {
                 resolve(values[index])
             } else {
-                reject("Not found")
+                reject(`Key ${key} could not be found in sheet ${this.Sheet.a1SheetName}`)
             }
         })
     }

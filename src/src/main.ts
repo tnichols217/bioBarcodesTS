@@ -65,10 +65,10 @@ const main = async () => {
 
         if (env.USE = USE.SHEETS) {
             // use sheets
-            lastTrsx = await (await sheet.getDataStore(sheets.Sheets.Variables)).get("LargestTrsx")
+            lastTrsx = await (await sheet.getDataStore(sheets.Sheets.Variables)).get("LargestTrsx").catch(console.error) || "0"
         } else {
             // use csv
-            lastTrsx = env.LAST_TRSX
+            lastTrsx = env.LAST_TRSX || "0"
         }
 
         let inventory = invs.Inventory.constructFromCSV(inv)
