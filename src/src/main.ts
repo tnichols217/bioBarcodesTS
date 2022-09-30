@@ -38,7 +38,7 @@ enum MODE {
 const parseEnv = (env: NodeJS.ProcessEnv) => {
     let castedEnv = env as EnvInput
     return Object.assign(castedEnv, {
-        INTERVAL: parseInt(castedEnv.INTERVAL)
+        INTERVAL: castedEnv ? parseInt(castedEnv.INTERVAL) : 60000
     }) as Env
 }
 
@@ -110,8 +110,10 @@ const main = async () => {
 
 if (env.MODE == MODE.DAEMON) {
     const wrappedMain = async () => {
+        console.log("Running main now...")
         main()
-        setTimeout(wrappedMain, env.INTERVAL || 60000)
+        console.log(`Watiting for ${env.INTERVAL}ms...`)
+        setTimeout(wrappedMain, env.INTERVAL)
     }
     wrappedMain()
 } else {
